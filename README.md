@@ -1,6 +1,8 @@
 # Bharat Diary
 
-India's AI-Powered Information and Solutions Hub
+Your comprehensive guide to India's information and solutions.
+
+Last updated: 2024-03-20
 
 ## Overview
 
