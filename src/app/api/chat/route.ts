@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server'
 
+// Define a mock response for the static site
+const MOCK_RESPONSE = {
+  reply: "This is a static demo of Bharat Diary AI assistant. In the production environment, I can answer your questions about India's culture, history, regions, and current affairs."
+};
+
+// For static export, we only support GET method
+export async function GET() {
+  return NextResponse.json(MOCK_RESPONSE);
+}
+
+// Keep the POST method for development mode
 export async function POST(request: Request) {
   try {
     const { message } = await request.json()

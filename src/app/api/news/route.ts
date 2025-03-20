@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import fetch from 'node-fetch';
-import { parseStringPromise } from 'xml2js';
+// import fetch from 'node-fetch';
+// import { parseStringPromise } from 'xml2js';
 
 interface NewsSource {
   name: string;
@@ -164,59 +164,7 @@ const MOCK_NEWS: NewsItem[] = [
   }
 ];
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const language = searchParams.get('language') || 'en';
-
-    const newsPromises = NEWS_SOURCES.map(async (source) => {
-      try {
-        const response = await fetch(source.url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        });
-        
-        if (!response.ok) {
-          console.error(`Failed to fetch from ${source.name}: ${response.statusText}`);
-          return [];
-        }
-
-        const xml = await response.text();
-        const result = await parseStringPromise(xml);
-        
-        if (!result.rss?.channel?.[0]?.item) {
-          console.error(`No items found in ${source.name} feed`);
-          return [];
-        }
-
-        return result.rss.channel[0].item.map((item: any) => ({
-          title: item.title[0],
-          description: item.description?.[0] || '',
-          link: item.link[0],
-          pubDate: item.pubDate?.[0] || new Date().toISOString(),
-          source: source.name
-        }));
-      } catch (error) {
-        console.error(`Error parsing data from ${source.name}:`, error);
-        return [];
-      }
-    });
-
-    const allNews = await Promise.all(newsPromises);
-    const flattenedNews = allNews.flat();
-
-    // Sort by date and return the latest 20 items
-    const sortedNews = flattenedNews
-      .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
-      .slice(0, 20);
-
-    return NextResponse.json(sortedNews);
-  } catch (error) {
-    console.error('Error in news API:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch news', items: MOCK_NEWS },
-      { status: 500 }
-    );
-  }
+export async function GET() {
+  // For static export, we'll just return mock data
+  return NextResponse.json(MOCK_NEWS);
 } 
