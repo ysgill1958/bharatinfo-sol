@@ -281,6 +281,7 @@ export default function HomePage() {
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
+  const [isHovered, setIsHovered] = useState<number | null>(null);
 
   // Fetch latest news
   useEffect(() => {
@@ -448,6 +449,9 @@ export default function HomePage() {
               position="relative"
               as={Link}
               href={item.href}
+              className={`group p-6 rounded-xl transition-all duration-300 transform hover:scale-105 cursor-pointer ${isHovered === index ? 'scale-105' : ''}`}
+              onMouseEnter={() => setIsHovered(index)}
+              onMouseLeave={() => setIsHovered(null)}
             >
               {/* Background Image */}
               <Box
@@ -457,7 +461,7 @@ export default function HomePage() {
                 left={0}
                 right={0}
                 bottom={0}
-                bgImage={`url(${item.image})`}
+                bgImage={`url(${process.env.NODE_ENV === 'production' ? `/bharatinfo-sol${item.image}` : item.image})`}
                 bgSize="cover"
                 bgPosition="center"
                 opacity={1}
@@ -566,7 +570,7 @@ export default function HomePage() {
             left={0}
             right={0}
             bottom={0}
-            bgImage="url('/india-bg.jpg')"
+            bgImage={process.env.NODE_ENV === 'production' ? "url('/bharatinfo-sol/india-bg.jpg')" : "url('/india-bg.jpg')"}
             bgSize="cover"
             bgPosition="center"
             zIndex={0}

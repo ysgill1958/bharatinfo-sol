@@ -187,7 +187,7 @@ export default function NortheastPage() {
             >
               <CardBody
                 p={0}
-                bgImage={`url(${item.image})`}
+                bgImage={`url(${process.env.NODE_ENV === 'production' ? `/bharatinfo-sol${item.image}` : item.image})`}
                 bgSize="cover"
                 bgPosition="center"
                 bgRepeat="no-repeat"

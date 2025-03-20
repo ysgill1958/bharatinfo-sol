@@ -40,12 +40,15 @@ export default function Header() {
 
       {/* Banner Section */}
       <Box
+        height={{ base: '600px', md: '1125px' }}
         position="relative"
-        height="450px"
-        bgImage="url('/banner.jpg')"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        overflow="hidden"
+        bgImage={process.env.NODE_ENV === 'production' ? "url('/bharatinfo-sol/banner.jpg')" : "url('/banner.jpg')"}
         bgSize="cover"
         bgPosition="center"
-        bgRepeat="no-repeat"
       >
         <Box
           position="absolute"
