@@ -25,9 +25,7 @@ jobs:
         
       - name: Build
         run: npm run build
-        env:
-          NEXT_PUBLIC_BASE_PATH: /bharatinfo-sol
-          
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
