@@ -6,21 +6,8 @@ const nextConfig = {
   },
   basePath: process.env.NODE_ENV === 'production' ? '/bharatinfo-sol' : '',
   assetPrefix: process.env.NODE_ENV === 'production' ? '/bharatinfo-sol/' : '',
-  // Skip dynamic route generation for static export
-  exportPathMap: async function() {
-    return {
-      '/': { page: '/' },
-      '/directory': { page: '/directory' },
-      '/news': { page: '/news' },
-      '/northeast': { page: '/northeast' },
-      '/chat': { page: '/chat' },
-      '/tools': { page: '/tools' },
-      '/categories': { page: '/categories' },
-      '/solutions': { page: '/solutions' },
-      '/professionals': { page: '/professionals' },
-      '/services': { page: '/services' },
-    };
-  },
+  // Cannot use exportPathMap with App Router
+  trailingSlash: true,
 }
 
 module.exports = nextConfig 
