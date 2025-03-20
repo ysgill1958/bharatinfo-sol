@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Professional {
+  id             Int      @id @default(autoincrement())
+  name           String
+  profession     String
+  specialization String
+  location       String
+  experience     Int      // in years
+  rating         Float
+  imageUrl       String?
+  bio            String   @db.Text
+  contactEmail   String?
+  contactPhone   String?
+  website        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  reviews        Review[]
+  services       Service[]
+}
+
+model Review {
+  id             Int         @id @default(autoincrement())
+  rating         Float
+  comment        String      @db.Text
+  authorName     String
+  professional   Professional @relation(fields: [professionalId], references: [id])
+  professionalId Int
+  createdAt      DateTime    @default(now())
+}
+
+model Service {
+  id             Int         @id @default(autoincrement())
+  name           String
+  description    String      @db.Text
+  price          Float?
+  duration       String?
+  professional   Professional @relation(fields: [professionalId], references: [id])
+  professionalId Int
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model NewsArticle {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String   @db.Text
+  category    String
+  source      String
+  imageUrl    String?
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tags        String[]
+} 
