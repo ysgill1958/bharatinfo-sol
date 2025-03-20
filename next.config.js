@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/bharatinfo-sol',
+  basePath: process.env.NODE_ENV === 'production' ? '/bharatinfo-sol' : '',
   images: {
     unoptimized: true,
   },
-  assetPrefix: '/bharatinfo-sol/',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/bharatinfo-sol/' : '',
 }
 
 module.exports = nextConfig 
