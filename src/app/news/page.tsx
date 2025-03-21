@@ -27,6 +27,73 @@ import {
 } from '@chakra-ui/react';
 import { FaGlobe, FaLanguage, FaNewspaper, FaSyncAlt } from 'react-icons/fa';
 
+// Define news sources
+const NEWS_SOURCES = [
+  // English News Sources
+  {
+    name: 'Times of India',
+    url: 'https://timesofindia.indiatimes.com/rssfeedstopstories.cms',
+    color: 'red',
+    language: 'en'
+  },
+  {
+    name: 'The Hindu',
+    url: 'https://www.thehindu.com/news/feeder/default.rss',
+    color: 'blue',
+    language: 'en'
+  },
+  {
+    name: 'NDTV',
+    url: 'https://feeds.feedburner.com/ndtvnews-top-stories',
+    color: 'purple',
+    language: 'en'
+  },
+  {
+    name: 'Economic Times',
+    url: 'https://economictimes.indiatimes.com/rssfeedsdefault.cms',
+    color: 'green',
+    language: 'en'
+  },
+  // Hindi News Sources
+  {
+    name: 'Dainik Bhaskar',
+    url: 'https://www.bhaskar.com/rss-v1--feed-news.xml',
+    color: 'orange',
+    language: 'hi'
+  },
+  {
+    name: 'Amar Ujala',
+    url: 'https://www.amarujala.com/rss/breaking-news.xml',
+    color: 'yellow',
+    language: 'hi'
+  },
+  {
+    name: 'Navbharat Times',
+    url: 'https://navbharattimes.indiatimes.com/rssfeedsdefault.cms',
+    color: 'pink',
+    language: 'hi'
+  },
+  // News Agencies
+  {
+    name: 'PTI',
+    url: 'https://www.ptinews.com/feed/',
+    color: 'cyan',
+    language: 'en'
+  },
+  {
+    name: 'ANI',
+    url: 'https://aninews.in/rss/feed.xml',
+    color: 'teal',
+    language: 'en'
+  },
+  {
+    name: 'IANS',
+    url: 'https://ians.in/rss/feed.xml',
+    color: 'purple',
+    language: 'en'
+  }
+];
+
 // Define news source colors
 const SOURCE_COLORS = {
   'Times of India': 'red',
@@ -115,12 +182,22 @@ export default function NewsPage() {
     try {
       setLoading(true);
       
-      // Build the URL based on environment
-      const baseUrl = process.env.NODE_ENV === 'production' 
-        ? '/bharatinfo-sol/api/news' 
-        : '/api/news';
-        
-      let url = baseUrl;
+      // In a static export (like GitHub Pages), API routes don't exist as endpoints
+      // Skip the fetch entirely in production and just use mock data
+      if (process.env.NODE_ENV === 'production') {
+        // Filter mock data by language if provided
+        if (language && language !== 'all') {
+          const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
+          setNewsItems(MOCK_NEWS.filter(item => sources.includes(item.source)));
+        } else {
+          setNewsItems(MOCK_NEWS);
+        }
+        setLoading(false);
+        return;
+      }
+      
+      // Only attempt to fetch in development environment
+      let url = '/api/news';
       if (language && language !== 'all') {
         url += `?language=${language}`;
       }
@@ -136,15 +213,29 @@ export default function NewsPage() {
         throw new Error(`HTTP error ${response.status}`);
       }
       
-      const data = await response.json();
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        // Try to parse as JSON
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError, 'Response was:', responseText.substring(0, 150) + '...');
+        throw new Error('Invalid JSON response');
+      }
       
       setNewsItems(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       console.error('News fetch error:', err);
       // Use mock data in case of error
-      setNewsItems(MOCK_NEWS);
-      setError('Could not fetch live news. Showing sample news instead.');
+      if (language && language !== 'all') {
+        const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
+        setNewsItems(MOCK_NEWS.filter(item => sources.includes(item.source)));
+      } else {
+        setNewsItems(MOCK_NEWS);
+      }
+      setError('Using sample news data');
     } finally {
       setLoading(false);
       setRefreshing(false);

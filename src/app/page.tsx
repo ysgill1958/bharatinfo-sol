@@ -326,12 +326,16 @@ export default function HomePage() {
   useEffect(() => {
     const fetchLatestNews = async () => {
       try {
-        // Add query parameter and build complete URL based on environment
-        const baseUrl = process.env.NODE_ENV === 'production' 
-          ? '/bharatinfo-sol/api/news' 
-          : '/api/news';
+        // In a static export (like GitHub Pages), API routes don't exist as endpoints
+        // Skip the fetch entirely in production and just use mock data
+        if (process.env.NODE_ENV === 'production') {
+          setLatestNews(MOCK_NEWS.slice(0, 5));
+          setNewsLoading(false);
+          return;
+        }
         
-        const response = await fetch(`${baseUrl}?language=en`, {
+        // Only try to fetch in development
+        const response = await fetch('/api/news?language=en', {
           headers: {
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache'
@@ -342,16 +346,24 @@ export default function HomePage() {
           throw new Error(`API error: ${response.status}`);
         }
         
-        const data = await response.json();
+        const responseText = await response.text();
+        let data;
         
-        // Get just the first 5 news items
+        try {
+          // Try to parse as JSON
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError, 'Response was:', responseText.substring(0, 150) + '...');
+          throw new Error('Invalid JSON response');
+        }
+        
         setLatestNews(Array.isArray(data) ? data.slice(0, 5) : []);
         setNewsLoading(false);
       } catch (err) {
         console.error('News fetch error:', err);
         // Use mock data in case of error
         setLatestNews(MOCK_NEWS.slice(0, 5));
-        setNewsError('Could not fetch live news. Showing sample news instead.');
+        setNewsError('Using sample news data');
         setNewsLoading(false);
       }
     };
