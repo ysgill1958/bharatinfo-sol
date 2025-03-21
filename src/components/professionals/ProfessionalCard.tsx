@@ -24,7 +24,14 @@ export const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
     >
       <Box position="relative">
         <Image
-          src={professional.avatar || '/images/placeholder-profile.jpg'}
+          src={professional.avatar ? 
+            (process.env.NODE_ENV === 'production' ? 
+              `/bharatinfo-sol${professional.avatar}` : 
+              professional.avatar) : 
+            (process.env.NODE_ENV === 'production' ? 
+              '/bharatinfo-sol/images/placeholder-profile.jpg' : 
+              '/images/placeholder-profile.jpg')
+          }
           alt={professional.name}
           height="200px"
           width="100%"
