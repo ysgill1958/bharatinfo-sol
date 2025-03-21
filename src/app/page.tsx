@@ -326,9 +326,13 @@ export default function HomePage() {
   useEffect(() => {
     const fetchLatestNews = async () => {
       try {
+        // Hardcoded flag for static deployment
+        const isStaticBuild = true; // Always use mock data for static deployment
+        
         // In a static export (like GitHub Pages), API routes don't exist as endpoints
         // Skip the fetch entirely in production and just use mock data
-        if (process.env.NODE_ENV === 'production' || 
+        if (isStaticBuild || 
+            process.env.NODE_ENV === 'production' || 
             process.env.STATIC_BUILD === 'true' || 
             process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
           setLatestNews(MOCK_NEWS.slice(0, 5));

@@ -102,8 +102,12 @@ export default function LatestUpdatesPage() {
   useEffect(() => {
     const fetchLatestNews = async () => {
       try {
+        // Hardcoded flag for static deployment
+        const isStaticBuild = true; // Always use mock data for static deployment
+        
         // In static export (production), use mock data instead of API calls
-        if (process.env.NODE_ENV === 'production' || 
+        if (isStaticBuild || 
+            process.env.NODE_ENV === 'production' || 
             process.env.STATIC_BUILD === 'true' || 
             process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
           setNewsItems(MOCK_NEWS);

@@ -57,8 +57,12 @@ export default function ChatComponent() {
     setIsLoading(true);
     
     try {
+      // Hardcoded flag for static deployment
+      const isStaticBuild = true; // Always use mock data for static deployment
+      
       // In production/static build, use mock response instead of fetch
-      if (process.env.NODE_ENV === 'production' || 
+      if (isStaticBuild || 
+          process.env.NODE_ENV === 'production' || 
           process.env.STATIC_BUILD === 'true' || 
           process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
         // Wait to simulate network request
