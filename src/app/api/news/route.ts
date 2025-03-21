@@ -165,22 +165,48 @@ const MOCK_NEWS: NewsItem[] = [
 ];
 
 export async function GET(request: Request) {
-  // Extract language parameter if provided
-  const url = new URL(request.url);
-  const language = url.searchParams.get('language');
-  
-  // Filter by language if provided
-  let news = [...MOCK_NEWS];
-  if (language) {
-    const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
-    news = news.filter(item => sources.includes(item.source));
-  }
-  
-  // For static export, return filtered mock data with proper headers
-  return new NextResponse(JSON.stringify(news), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store, max-age=0'
+  try {
+    // Extract language parameter if provided
+    const url = new URL(request.url);
+    const language = url.searchParams.get('language');
+    
+    // Filter by language if provided
+    let news = [...MOCK_NEWS];
+    if (language) {
+      // Get sources matching the requested language
+      const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
+      // Filter news items by those sources
+      news = news.filter(item => sources.includes(item.source));
     }
-  });
+    
+    // Enhance news items with source colors
+    const newsWithColors = news.map(item => ({
+      ...item,
+      sourceColor: SOURCE_COLORS[item.source as keyof typeof SOURCE_COLORS] || 'gray',
+      language: NEWS_SOURCES.find(source => source.name === item.source)?.language || 'en'
+    }));
+    
+    // Return JSON with appropriate headers
+    return new NextResponse(JSON.stringify(newsWithColors), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, max-age=0'
+      },
+      status: 200
+    });
+  } catch (error) {
+    console.error('News API error:', error);
+    
+    // Return error response
+    return new NextResponse(JSON.stringify({ 
+      error: 'Failed to retrieve news data',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, max-age=0'
+      },
+      status: 500
+    });
+  }
 } 

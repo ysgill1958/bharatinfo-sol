@@ -261,7 +261,7 @@ const SOURCE_COLORS = {
   'IANS': 'purple'
 };
 
-// Fallback mock news data
+// Mock news data for fallback
 const MOCK_NEWS: NewsItem[] = [
   {
     title: 'India Reports Strong Economic Growth in Q1',
@@ -292,11 +292,11 @@ const MOCK_NEWS: NewsItem[] = [
     source: 'PTI'
   },
   {
-    title: 'IANS: New Space Mission Announced',
-    description: 'ISRO announces plans for a new lunar mission in collaboration with international partners.',
-    link: 'https://example.com/space/new-mission',
+    title: 'ANI: India-US Strategic Partnership Strengthens',
+    description: 'Bilateral ties between India and the United States reach new heights with latest agreements.',
+    link: 'https://example.com/diplomacy/india-us',
     pubDate: new Date().toISOString(),
-    source: 'IANS'
+    source: 'ANI'
   }
 ];
 
