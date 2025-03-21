@@ -58,7 +58,9 @@ export default function ChatComponent() {
     
     try {
       // In production/static build, use mock response instead of fetch
-      if (process.env.NODE_ENV === 'production' || process.env.STATIC_BUILD === 'true') {
+      if (process.env.NODE_ENV === 'production' || 
+          process.env.STATIC_BUILD === 'true' || 
+          process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
         // Wait to simulate network request
         await new Promise(resolve => setTimeout(resolve, 1000));
         

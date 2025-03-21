@@ -103,7 +103,9 @@ export default function LatestUpdatesPage() {
     const fetchLatestNews = async () => {
       try {
         // In static export (production), use mock data instead of API calls
-        if (process.env.NODE_ENV === 'production' || process.env.STATIC_BUILD === 'true') {
+        if (process.env.NODE_ENV === 'production' || 
+            process.env.STATIC_BUILD === 'true' || 
+            process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
           setNewsItems(MOCK_NEWS);
           setLoading(false);
           return;

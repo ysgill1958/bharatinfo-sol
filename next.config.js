@@ -13,6 +13,8 @@ const nextConfig = {
   env: {
     STATIC_BUILD: process.env.NODE_ENV === 'production' ? 'true' : 'false',
     APP_BASE_PATH: process.env.NODE_ENV === 'production' ? '/bharatinfo-sol' : '',
+    // Force disable data fetching in static site generation
+    NEXT_PUBLIC_STATIC_BUILD: process.env.NODE_ENV === 'production' ? 'true' : 'false',
   },
   // Add webpack configuration to handle image imports
   webpack: (config) => {

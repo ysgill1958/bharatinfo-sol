@@ -2,22 +2,24 @@ import { NextResponse } from 'next/server';
 // import fetch from 'node-fetch';
 // import { parseStringPromise } from 'xml2js';
 
-interface NewsSource {
+export interface NewsSource {
   name: string;
   url: string;
   color: string;
   language: string;
 }
 
-interface NewsItem {
+export interface NewsItem {
   title: string;
   description: string;
   link: string;
   pubDate: string;
   source: string;
+  sourceColor?: string;
+  language?: string;
 }
 
-const NEWS_SOURCES: NewsSource[] = [
+export const NEWS_SOURCES: NewsSource[] = [
   // English News Sources
   {
     name: 'Times of India',
@@ -84,7 +86,7 @@ const NEWS_SOURCES: NewsSource[] = [
 ];
 
 // Update SOURCE_COLORS in page.tsx to match these new sources
-const SOURCE_COLORS = {
+export const SOURCE_COLORS = {
   'Times of India': 'red',
   'The Hindu': 'blue',
   'NDTV': 'purple',
@@ -98,7 +100,7 @@ const SOURCE_COLORS = {
 };
 
 // Update mock data to include Hindi and agency news
-const MOCK_NEWS: NewsItem[] = [
+export const MOCK_NEWS: NewsItem[] = [
   {
     title: 'India Reports Strong Economic Growth in Q1',
     description: 'The Indian economy showed resilience with 7.2% growth in the first quarter despite global challenges.',

@@ -328,7 +328,9 @@ export default function HomePage() {
       try {
         // In a static export (like GitHub Pages), API routes don't exist as endpoints
         // Skip the fetch entirely in production and just use mock data
-        if (process.env.NODE_ENV === 'production') {
+        if (process.env.NODE_ENV === 'production' || 
+            process.env.STATIC_BUILD === 'true' || 
+            process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
           setLatestNews(MOCK_NEWS.slice(0, 5));
           setNewsLoading(false);
           return;
