@@ -57,32 +57,61 @@ export default function ChatComponent() {
     setIsLoading(true);
     
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: currentInput })
-      });
-      
-      const data = await response.json();
-      
-      if (response.ok) {
+      // In production/static build, use mock response instead of fetch
+      if (process.env.NODE_ENV === 'production' || process.env.STATIC_BUILD === 'true') {
+        // Wait to simulate network request
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Use predefined responses or a generic one
+        const demoResponses: Record<string, string> = {
+          'hello': 'Hello! Welcome to Bharat Diary. How can I assist you with information about India today?',
+          'who are you': 'I am the Bharat Diary AI assistant, designed to provide information about India\'s culture, history, regions, and current affairs.',
+          'what can you do': 'I can help you find information about India\'s history, culture, travel destinations, festivals, cuisine, and more.',
+          'help': 'I can provide information about various aspects of India - from history and culture to current events and regional information. What would you like to know?'
+        };
+        
+        // Check if message contains any of the keys in demoResponses
+        const matchingKey = Object.keys(demoResponses).find(key => 
+          currentInput.toLowerCase().includes(key.toLowerCase())
+        );
+        
+        const response = matchingKey 
+          ? demoResponses[matchingKey]
+          : `Thank you for your question about "${currentInput}". In this static demo version, I provide limited responses. The full version would connect to a comprehensive AI system.`;
+          
         setMessages(prev => [...prev, { 
           role: 'assistant', 
-          content: data.reply 
+          content: response
         }]);
       } else {
-        toast({
-          title: 'Error',
-          description: data.error || 'Failed to get response',
-          status: 'error',
-          duration: 3000,
-          isClosable: true
+        // Regular fetch for development environment
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: currentInput })
         });
         
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: 'Sorry, I encountered an error. Please try again.' 
-        }]);
+        const data = await response.json();
+        
+        if (response.ok) {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: data.reply 
+          }]);
+        } else {
+          toast({
+            title: 'Error',
+            description: data.error || 'Failed to get response',
+            status: 'error',
+            duration: 3000,
+            isClosable: true
+          });
+          
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: 'Sorry, I encountered an error. Please try again.' 
+          }]);
+        }
       }
     } catch (error) {
       console.error('Error sending message:', error);

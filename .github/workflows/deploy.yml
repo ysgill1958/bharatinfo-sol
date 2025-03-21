@@ -36,14 +36,26 @@ jobs:
         uses: actions/configure-pages@v4
       - name: Install dependencies
         run: npm ci
+      - name: Set build environment
+        run: |
+          echo "Setting production environment variables"
+          echo "NODE_ENV=production" >> $GITHUB_ENV
+          echo "STATIC_BUILD=true" >> $GITHUB_ENV
+          echo "APP_BASE_PATH=/bharatinfo-sol" >> $GITHUB_ENV
       - name: Build
         run: npm run build:github
         env:
           NODE_ENV: production
+          STATIC_BUILD: true
+          APP_BASE_PATH: /bharatinfo-sol
       - name: Fix image paths
         run: node scripts/fix-image-paths.js
-      - name: Fast image fix
-        run: node scripts/fast-image-fix.js
+      - name: Debug build output
+        run: |
+          echo "Listing build output files..."
+          ls -la out/
+          echo "Checking for HTML files..."
+          find out -name "*.html" | head -5
       - name: Manual copy of public assets
         run: |
           echo "Manually copying public directory to out directory..."
