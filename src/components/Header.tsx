@@ -23,7 +23,7 @@ export default function Header() {
           <Link href="/" passHref>
             <Flex align="center" cursor="pointer">
               <Image
-                src="/logo.png"
+                src={process.env.NODE_ENV === 'production' ? "/bharatinfo-sol/logo.png" : "/logo.png"}
                 alt="Bharat Diary Logo"
                 height="40px"
                 width="auto"
