@@ -41,7 +41,7 @@ export default function Header() {
 
       {/* Banner Section */}
       <Box
-        height={{ base: '600px', md: '1125px' }}
+        height={{ base: '150px', md: '280px' }}
         position="relative"
         display="flex"
         alignItems="center"
@@ -65,7 +65,7 @@ export default function Header() {
           <Container maxW="container.xl">
             <Heading
               color="white"
-              size="2xl"
+              size={{ base: "md", md: "xl" }}
               textAlign="center"
               textShadow="2px 2px 4px rgba(0,0,0,0.5)"
             >
@@ -73,9 +73,9 @@ export default function Header() {
             </Heading>
             <Text
               color="white"
-              fontSize="xl"
+              fontSize={{ base: "sm", md: "md" }}
               textAlign="center"
-              mt={4}
+              mt={2}
               textShadow="1px 1px 2px rgba(0,0,0,0.5)"
             >
               Your comprehensive guide to India's culture, services, and opportunities
