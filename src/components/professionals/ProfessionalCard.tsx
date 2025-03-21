@@ -2,6 +2,7 @@ import { Box, Badge, Image, Text, Flex, Icon, Button, useColorModeValue } from '
 import { FaStar, FaMapMarkerAlt, FaCheck, FaClock } from 'react-icons/fa';
 import { ProfessionalProfile } from '@/types/professional';
 import Link from 'next/link';
+import { getImagePath } from '@/utils/imagePath';
 
 interface ProfessionalCardProps {
   professional: ProfessionalProfile;
@@ -24,14 +25,7 @@ export const ProfessionalCard = ({ professional }: ProfessionalCardProps) => {
     >
       <Box position="relative">
         <Image
-          src={professional.avatar ? 
-            (process.env.NODE_ENV === 'production' ? 
-              `/bharatinfo-sol${professional.avatar}` : 
-              professional.avatar) : 
-            (process.env.NODE_ENV === 'production' ? 
-              '/bharatinfo-sol/images/placeholder-profile.jpg' : 
-              '/images/placeholder-profile.jpg')
-          }
+          src={getImagePath(professional.avatar || '/images/placeholder-profile.jpg')}
           alt={professional.name}
           height="200px"
           width="100%"

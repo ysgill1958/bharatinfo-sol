@@ -10,6 +10,7 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 import Link from 'next/link';
+import { getImagePath, getBackgroundImageUrl } from '@/utils/imagePath';
 
 export default function Header() {
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -23,7 +24,7 @@ export default function Header() {
           <Link href="/" passHref>
             <Flex align="center" cursor="pointer">
               <Image
-                src={process.env.NODE_ENV === 'production' ? "/bharatinfo-sol/logo.png" : "/logo.png"}
+                src={getImagePath('/logo.png')}
                 alt="Bharat Diary Logo"
                 height="40px"
                 width="auto"
@@ -46,7 +47,7 @@ export default function Header() {
         alignItems="center"
         justifyContent="center"
         overflow="hidden"
-        bgImage={process.env.NODE_ENV === 'production' ? "url('/bharatinfo-sol/banner.jpg')" : "url('/banner.jpg')"}
+        bgImage={getBackgroundImageUrl('/banner.jpg')}
         bgSize="cover"
         bgPosition="center"
       >
