@@ -261,6 +261,45 @@ const SOURCE_COLORS = {
   'IANS': 'purple'
 };
 
+// Fallback mock news data
+const MOCK_NEWS: NewsItem[] = [
+  {
+    title: 'India Reports Strong Economic Growth in Q1',
+    description: 'The Indian economy showed resilience with 7.2% growth in the first quarter despite global challenges.',
+    link: 'https://example.com/business/india-economy',
+    pubDate: new Date().toISOString(),
+    source: 'Times of India'
+  },
+  {
+    title: 'New Tech Hub Inaugurated in Bengaluru',
+    description: 'A state-of-the-art technology center opened in Bengaluru, expected to create 10,000 jobs.',
+    link: 'https://example.com/tech/bengaluru-hub',
+    pubDate: new Date().toISOString(),
+    source: 'The Hindu'
+  },
+  {
+    title: 'Stock Market Reaches All-Time High',
+    description: 'Indian stock indices surged to record levels powered by tech and banking stocks.',
+    link: 'https://example.com/markets/record-high',
+    pubDate: new Date().toISOString(),
+    source: 'Economic Times'
+  },
+  {
+    title: 'PTI: Major Policy Reforms Expected in Budget',
+    description: 'Government sources indicate significant economic reforms in the upcoming budget session.',
+    link: 'https://example.com/budget/reforms',
+    pubDate: new Date().toISOString(),
+    source: 'PTI'
+  },
+  {
+    title: 'IANS: New Space Mission Announced',
+    description: 'ISRO announces plans for a new lunar mission in collaboration with international partners.',
+    link: 'https://example.com/space/new-mission',
+    pubDate: new Date().toISOString(),
+    source: 'IANS'
+  }
+];
+
 type NewsItem = {
   title: string;
   description: string;
@@ -287,16 +326,32 @@ export default function HomePage() {
   useEffect(() => {
     const fetchLatestNews = async () => {
       try {
-        const response = await fetch('/api/news?language=en');
-        const data = await response.json();
-        if ('error' in data) {
-          throw new Error(data.error);
+        // Add query parameter and build complete URL based on environment
+        const baseUrl = process.env.NODE_ENV === 'production' 
+          ? '/bharatinfo-sol/api/news' 
+          : '/api/news';
+        
+        const response = await fetch(`${baseUrl}?language=en`, {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
         }
+        
+        const data = await response.json();
+        
         // Get just the first 5 news items
-        setLatestNews(data.slice(0, 5));
+        setLatestNews(Array.isArray(data) ? data.slice(0, 5) : []);
         setNewsLoading(false);
       } catch (err) {
-        setNewsError(err instanceof Error ? err.message : 'Failed to fetch news');
+        console.error('News fetch error:', err);
+        // Use mock data in case of error
+        setLatestNews(MOCK_NEWS.slice(0, 5));
+        setNewsError('Could not fetch live news. Showing sample news instead.');
         setNewsLoading(false);
       }
     };

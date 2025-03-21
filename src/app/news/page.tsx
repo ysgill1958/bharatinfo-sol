@@ -32,8 +32,63 @@ const SOURCE_COLORS = {
   'Times of India': 'red',
   'The Hindu': 'blue',
   'NDTV': 'purple',
-  'Economic Times': 'green'
+  'Economic Times': 'green',
+  'Dainik Bhaskar': 'orange',
+  'Amar Ujala': 'yellow',
+  'Navbharat Times': 'pink',
+  'PTI': 'cyan',
+  'ANI': 'teal',
+  'IANS': 'purple'
 };
+
+// Fallback mock news data
+const MOCK_NEWS: NewsItem[] = [
+  {
+    title: 'India Reports Strong Economic Growth in Q1',
+    description: 'The Indian economy showed resilience with 7.2% growth in the first quarter despite global challenges.',
+    link: 'https://example.com/business/india-economy',
+    pubDate: new Date().toISOString(),
+    source: 'Times of India',
+    sourceColor: 'red',
+    language: 'en'
+  },
+  {
+    title: 'नई शिक्षा नीति पर सरकार का बड़ा फैसला',
+    description: 'केंद्र सरकार ने नई शिक्षा नीति के तहत पाठ्यक्रम में बड़े बदलाव की घोषणा की है।',
+    link: 'https://example.com/education/new-policy',
+    pubDate: new Date().toISOString(),
+    source: 'Dainik Bhaskar',
+    sourceColor: 'orange',
+    language: 'hi'
+  },
+  {
+    title: 'New Tech Hub Inaugurated in Bengaluru',
+    description: 'A state-of-the-art technology center opened in Bengaluru, expected to create 10,000 jobs.',
+    link: 'https://example.com/tech/bengaluru-hub',
+    pubDate: new Date().toISOString(),
+    source: 'The Hindu',
+    sourceColor: 'blue',
+    language: 'en'
+  },
+  {
+    title: 'PTI: Major Policy Reforms Expected in Budget',
+    description: 'Government sources indicate significant economic reforms in the upcoming budget session.',
+    link: 'https://example.com/budget/reforms',
+    pubDate: new Date().toISOString(),
+    source: 'PTI',
+    sourceColor: 'cyan',
+    language: 'en'
+  },
+  {
+    title: 'ANI: India-US Strategic Partnership Strengthens',
+    description: 'Bilateral ties between India and the United States reach new heights with latest agreements.',
+    link: 'https://example.com/diplomacy/india-us',
+    pubDate: new Date().toISOString(),
+    source: 'ANI',
+    sourceColor: 'teal',
+    language: 'en'
+  }
+];
 
 type NewsItem = {
   title: string;
@@ -59,25 +114,37 @@ export default function NewsPage() {
   const fetchNews = async (language?: string) => {
     try {
       setLoading(true);
-      let url = '/api/news';
+      
+      // Build the URL based on environment
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? '/bharatinfo-sol/api/news' 
+        : '/api/news';
+        
+      let url = baseUrl;
       if (language && language !== 'all') {
         url += `?language=${language}`;
       }
       
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}`);
       }
       
       const data = await response.json();
-      if ('error' in data) {
-        throw new Error(data.error);
-      }
       
-      setNewsItems(data);
+      setNewsItems(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch news');
+      console.error('News fetch error:', err);
+      // Use mock data in case of error
+      setNewsItems(MOCK_NEWS);
+      setError('Could not fetch live news. Showing sample news instead.');
     } finally {
       setLoading(false);
       setRefreshing(false);

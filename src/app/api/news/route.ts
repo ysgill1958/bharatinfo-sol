@@ -164,7 +164,23 @@ const MOCK_NEWS: NewsItem[] = [
   }
 ];
 
-export async function GET() {
-  // For static export, we'll just return mock data
-  return NextResponse.json(MOCK_NEWS);
+export async function GET(request: Request) {
+  // Extract language parameter if provided
+  const url = new URL(request.url);
+  const language = url.searchParams.get('language');
+  
+  // Filter by language if provided
+  let news = [...MOCK_NEWS];
+  if (language) {
+    const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
+    news = news.filter(item => sources.includes(item.source));
+  }
+  
+  // For static export, return filtered mock data with proper headers
+  return new NextResponse(JSON.stringify(news), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, max-age=0'
+    }
+  });
 } 
