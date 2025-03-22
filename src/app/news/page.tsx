@@ -26,6 +26,7 @@ import {
   Icon
 } from '@chakra-ui/react';
 import { FaGlobe, FaLanguage, FaNewspaper, FaSyncAlt } from 'react-icons/fa';
+import { MOCK_NEWS, NewsItem } from '../mockNews';
 
 // Define news sources
 const NEWS_SOURCES = [
@@ -108,65 +109,6 @@ const SOURCE_COLORS = {
   'IANS': 'purple'
 };
 
-// Fallback mock news data
-const MOCK_NEWS: NewsItem[] = [
-  {
-    title: 'India Reports Strong Economic Growth in Q1',
-    description: 'The Indian economy showed resilience with 7.2% growth in the first quarter despite global challenges.',
-    link: 'https://example.com/business/india-economy',
-    pubDate: new Date().toISOString(),
-    source: 'Times of India',
-    sourceColor: 'red',
-    language: 'en'
-  },
-  {
-    title: 'नई शिक्षा नीति पर सरकार का बड़ा फैसला',
-    description: 'केंद्र सरकार ने नई शिक्षा नीति के तहत पाठ्यक्रम में बड़े बदलाव की घोषणा की है।',
-    link: 'https://example.com/education/new-policy',
-    pubDate: new Date().toISOString(),
-    source: 'Dainik Bhaskar',
-    sourceColor: 'orange',
-    language: 'hi'
-  },
-  {
-    title: 'New Tech Hub Inaugurated in Bengaluru',
-    description: 'A state-of-the-art technology center opened in Bengaluru, expected to create 10,000 jobs.',
-    link: 'https://example.com/tech/bengaluru-hub',
-    pubDate: new Date().toISOString(),
-    source: 'The Hindu',
-    sourceColor: 'blue',
-    language: 'en'
-  },
-  {
-    title: 'PTI: Major Policy Reforms Expected in Budget',
-    description: 'Government sources indicate significant economic reforms in the upcoming budget session.',
-    link: 'https://example.com/budget/reforms',
-    pubDate: new Date().toISOString(),
-    source: 'PTI',
-    sourceColor: 'cyan',
-    language: 'en'
-  },
-  {
-    title: 'ANI: India-US Strategic Partnership Strengthens',
-    description: 'Bilateral ties between India and the United States reach new heights with latest agreements.',
-    link: 'https://example.com/diplomacy/india-us',
-    pubDate: new Date().toISOString(),
-    source: 'ANI',
-    sourceColor: 'teal',
-    language: 'en'
-  }
-];
-
-type NewsItem = {
-  title: string;
-  description: string;
-  link: string;
-  pubDate: string;
-  source: string;
-  sourceColor: string;
-  language: string;
-};
-
 export default function NewsPage() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -178,75 +120,62 @@ export default function NewsPage() {
   const borderColor = useColorModeValue('gray.200', 'gray.700');
   const headerBg = useColorModeValue('blue.50', 'blue.900');
 
-  const fetchNews = async (language?: string) => {
+  async function fetchNews() {
+    setLoading(true);
+    setError('');
+    
     try {
-      setLoading(true);
+      let url;
       
-      // Hardcoded flag for static deployment
-      const isStaticBuild = true; // Always use mock data for static deployment
-      
-      // In a static export (like GitHub Pages), API routes don't exist as endpoints
-      // Skip the fetch entirely in production and just use mock data
-      if (isStaticBuild || 
-          process.env.NODE_ENV === 'production' || 
-          process.env.STATIC_BUILD === 'true' || 
-          process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
-        // Filter mock data by language if provided
-        if (language && language !== 'all') {
-          const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
-          setNewsItems(MOCK_NEWS.filter(item => sources.includes(item.source)));
+      // In production static build, load from pre-generated JSON
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+        const baseUrl = '/bharatinfo-sol';
+        url = `${baseUrl}/data/news-${activeLanguage === 'hi' ? 'hi' : 'en'}.json`;
+        
+        const res = await fetch(url, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch news: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        
+        if (data && data.articles) {
+          setNewsItems(data.articles);
         } else {
-          setNewsItems(MOCK_NEWS);
+          console.error("Invalid news data format from JSON file");
+          // Filter mock news by language
+          setNewsItems(MOCK_NEWS.filter(item => item.language === activeLanguage || item.language === 'en'));
         }
-        setLoading(false);
-        return;
-      }
-      
-      // Only attempt to fetch in development environment
-      let url = '/api/news';
-      if (language && language !== 'all') {
-        url += `?language=${language}`;
-      }
-      
-      const response = await fetch(url, {
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      
-      const responseText = await response.text();
-      let data;
-      
-      try {
-        // Try to parse as JSON
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError, 'Response was:', responseText.substring(0, 150) + '...');
-        throw new Error('Invalid JSON response');
-      }
-      
-      setNewsItems(Array.isArray(data) ? data : []);
-      setError(null);
-    } catch (err) {
-      console.error('News fetch error:', err);
-      // Use mock data in case of error
-      if (language && language !== 'all') {
-        const sources = NEWS_SOURCES.filter(source => source.language === language).map(source => source.name);
-        setNewsItems(MOCK_NEWS.filter(item => sources.includes(item.source)));
       } else {
-        setNewsItems(MOCK_NEWS);
+        // In development, use API route
+        url = `/api/news?lang=${activeLanguage}`;
+        
+        const res = await fetch(url, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch news: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        setNewsItems(data);
       }
-      setError('Using sample news data');
+    } catch (err) {
+      console.error('Error fetching news:', err);
+      setError('Failed to fetch news. Showing fallback content.');
+      // Filter mock news by language
+      setNewsItems(MOCK_NEWS.filter(item => item.language === activeLanguage || item.language === 'en'));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }
 
   useEffect(() => {
     fetchNews();
@@ -254,12 +183,12 @@ export default function NewsPage() {
 
   const handleLanguageChange = (language: string) => {
     setActiveLanguage(language);
-    fetchNews(language);
+    fetchNews();
   };
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchNews(activeLanguage);
+    fetchNews();
   };
 
   const filteredNews = newsItems;

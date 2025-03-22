@@ -38,6 +38,7 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import { useState, useEffect } from 'react'
 import ChatComponent from '@/components/ChatComponent';
+import { MOCK_NEWS } from './mockNews';
 
 
 const quickLinks = [
@@ -261,45 +262,6 @@ const SOURCE_COLORS = {
   'IANS': 'purple'
 };
 
-// Mock news data for fallback
-const MOCK_NEWS: NewsItem[] = [
-  {
-    title: 'India Reports Strong Economic Growth in Q1',
-    description: 'The Indian economy showed resilience with 7.2% growth in the first quarter despite global challenges.',
-    link: 'https://example.com/business/india-economy',
-    pubDate: new Date().toISOString(),
-    source: 'Times of India'
-  },
-  {
-    title: 'New Tech Hub Inaugurated in Bengaluru',
-    description: 'A state-of-the-art technology center opened in Bengaluru, expected to create 10,000 jobs.',
-    link: 'https://example.com/tech/bengaluru-hub',
-    pubDate: new Date().toISOString(),
-    source: 'The Hindu'
-  },
-  {
-    title: 'Stock Market Reaches All-Time High',
-    description: 'Indian stock indices surged to record levels powered by tech and banking stocks.',
-    link: 'https://example.com/markets/record-high',
-    pubDate: new Date().toISOString(),
-    source: 'Economic Times'
-  },
-  {
-    title: 'PTI: Major Policy Reforms Expected in Budget',
-    description: 'Government sources indicate significant economic reforms in the upcoming budget session.',
-    link: 'https://example.com/budget/reforms',
-    pubDate: new Date().toISOString(),
-    source: 'PTI'
-  },
-  {
-    title: 'ANI: India-US Strategic Partnership Strengthens',
-    description: 'Bilateral ties between India and the United States reach new heights with latest agreements.',
-    link: 'https://example.com/diplomacy/india-us',
-    pubDate: new Date().toISOString(),
-    source: 'ANI'
-  }
-];
-
 type NewsItem = {
   title: string;
   description: string;
@@ -321,61 +283,50 @@ export default function HomePage() {
   const [newsError, setNewsError] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [isHovered, setIsHovered] = useState<number | null>(null);
+  const [news, setNews] = useState<any[]>([]);
 
-  // Fetch latest news
+  // Fetch news data with static build support
   useEffect(() => {
-    const fetchLatestNews = async () => {
+    async function fetchNews() {
+      setNewsLoading(true);
       try {
-        // Hardcoded flag for static deployment
-        const isStaticBuild = true; // Always use mock data for static deployment
-        
-        // In a static export (like GitHub Pages), API routes don't exist as endpoints
-        // Skip the fetch entirely in production and just use mock data
-        if (isStaticBuild || 
-            process.env.NODE_ENV === 'production' || 
-            process.env.STATIC_BUILD === 'true' || 
-            process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
-          setLatestNews(MOCK_NEWS.slice(0, 5));
-          setNewsLoading(false);
-          return;
-        }
-        
-        // Only try to fetch in development
-        const response = await fetch('/api/news?language=en', {
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+        if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+          // In production static build, load from pre-generated JSON
+          const data = await fetch(`/bharatinfo-sol/data/news-${activeLanguage === 'hi' ? 'hi' : 'en'}.json`)
+            .then(res => res.json());
+          
+          if (data && data.articles) {
+            setNews(data.articles.slice(0, 5));
+          } else {
+            console.error("Invalid news data format from JSON file");
+            setNews(MOCK_NEWS);
           }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
+        } else {
+          // In development or SSR, call the API route
+          const res = await fetch(`/api/news?lang=${activeLanguage}`, {
+            cache: 'no-store',
+            headers: {
+              'Cache-Control': 'no-cache'
+            }
+          });
+          
+          if (!res.ok) {
+            throw new Error(`Failed to fetch news: ${res.status}`);
+          }
+          
+          const data = await res.json();
+          setNews(data.slice(0, 5));
         }
-        
-        const responseText = await response.text();
-        let data;
-        
-        try {
-          // Try to parse as JSON
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('JSON parse error:', parseError, 'Response was:', responseText.substring(0, 150) + '...');
-          throw new Error('Invalid JSON response');
-        }
-        
-        setLatestNews(Array.isArray(data) ? data.slice(0, 5) : []);
-        setNewsLoading(false);
-      } catch (err) {
-        console.error('News fetch error:', err);
-        // Use mock data in case of error
-        setLatestNews(MOCK_NEWS.slice(0, 5));
-        setNewsError('Using sample news data');
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        setNews(MOCK_NEWS);
+      } finally {
         setNewsLoading(false);
       }
-    };
+    }
 
-    fetchLatestNews();
-  }, []);
+    fetchNews();
+  }, [activeLanguage]);
 
   return (
     <Box bg={bgColor} minH="100vh">
@@ -466,7 +417,7 @@ export default function HomePage() {
             <Text color="red.500">{newsError}</Text>
           ) : (
             <SimpleGrid columns={{ base: 1, md: 2, lg: 5 }} spacing={4}>
-              {latestNews.map((item, index) => (
+              {news.map((item, index) => (
                 <LinkBox 
                   key={index}
                   borderWidth="1px"

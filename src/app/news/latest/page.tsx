@@ -16,19 +16,14 @@ import {
   AlertIcon,
   Spinner,
   Flex,
-  Divider
+  Divider,
+  VStack,
+  Link,
+  Button,
+  HStack
 } from '@chakra-ui/react';
-
-// Define news item type
-type NewsItem = {
-  title: string;
-  description: string;
-  link: string;
-  pubDate: string;
-  source: string;
-  sourceColor?: string;
-  language?: string;
-};
+import { FaSyncAlt, FaLanguage } from 'react-icons/fa';
+import { MOCK_NEWS, NewsItem } from '../../mockNews';
 
 // Source colors mapping
 const SOURCE_COLORS: Record<string, string> = {
@@ -41,112 +36,100 @@ const SOURCE_COLORS: Record<string, string> = {
   'IANS': 'purple'
 };
 
-// Mock news data for static deployment
-const MOCK_NEWS: NewsItem[] = [
-  {
-    title: 'India Reports Strong Economic Growth in Q1',
-    description: 'The Indian economy showed resilience with 7.2% growth in the first quarter despite global challenges.',
-    link: 'https://example.com/business/india-economy',
-    pubDate: new Date().toISOString(),
-    source: 'Times of India',
-    sourceColor: 'red',
-    language: 'en'
-  },
-  {
-    title: 'New Tech Hub Inaugurated in Bengaluru',
-    description: 'A state-of-the-art technology center opened in Bengaluru, expected to create 10,000 jobs.',
-    link: 'https://example.com/tech/bengaluru-hub',
-    pubDate: new Date().toISOString(),
-    source: 'The Hindu',
-    sourceColor: 'blue',
-    language: 'en'
-  },
-  {
-    title: 'Stock Market Reaches All-Time High',
-    description: 'Indian stock indices surged to record levels powered by tech and banking stocks.',
-    link: 'https://example.com/markets/record-high',
-    pubDate: new Date().toISOString(),
-    source: 'Economic Times',
-    sourceColor: 'green',
-    language: 'en'
-  },
-  {
-    title: 'PTI: Major Policy Reforms Expected in Budget',
-    description: 'Government sources indicate significant economic reforms in the upcoming budget session.',
-    link: 'https://example.com/budget/reforms',
-    pubDate: new Date().toISOString(),
-    source: 'PTI',
-    sourceColor: 'cyan',
-    language: 'en'
-  },
-  {
-    title: 'ANI: India-US Strategic Partnership Strengthens',
-    description: 'Bilateral ties between India and the United States reach new heights with latest agreements.',
-    link: 'https://example.com/diplomacy/india-us',
-    pubDate: new Date().toISOString(),
-    source: 'ANI',
-    sourceColor: 'teal',
-    language: 'en'
-  }
-];
-
-export default function LatestUpdatesPage() {
+export default function LatestNewsUpdates() {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeLanguage, setActiveLanguage] = useState('en');
+  const [refreshing, setRefreshing] = useState(false);
 
   const bgColor = useColorModeValue('white', 'gray.800');
+  const textColor = useColorModeValue('gray.700', 'white');
+  const headingColor = useColorModeValue('blue.600', 'blue.300');
   const borderColor = useColorModeValue('gray.200', 'gray.700');
+  const badgeBg = useColorModeValue('blue.50', 'blue.900');
   const headerBg = useColorModeValue('blue.50', 'blue.900');
 
-  useEffect(() => {
-    const fetchLatestNews = async () => {
-      try {
-        // Hardcoded flag for static deployment
-        const isStaticBuild = true; // Always use mock data for static deployment
+  async function fetchNews() {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // In production static build, load from pre-generated JSON
+      if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+        const baseUrl = '/bharatinfo-sol';
+        const url = `${baseUrl}/data/news-${activeLanguage === 'hi' ? 'hi' : 'en'}.json`;
         
-        // In static export (production), use mock data instead of API calls
-        if (isStaticBuild || 
-            process.env.NODE_ENV === 'production' || 
-            process.env.STATIC_BUILD === 'true' || 
-            process.env.NEXT_PUBLIC_STATIC_BUILD === 'true') {
-          setNewsItems(MOCK_NEWS);
-          setLoading(false);
-          return;
+        const res = await fetch(url, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch news: ${res.status}`);
         }
         
-        // Only try to fetch in development
-        const response = await fetch('/api/news');
-        if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
+        const data = await res.json();
+        
+        if (data && data.articles) {
+          setNewsItems(data.articles.slice(0, 10));
+        } else {
+          console.error("Invalid news data format from JSON file");
+          // Filter mock news by language
+          setNewsItems(MOCK_NEWS.filter(item => item.language === activeLanguage));
+        }
+      } else {
+        // In development, use API route
+        const url = `/api/news?lang=${activeLanguage}`;
+        
+        const res = await fetch(url, {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch news: ${res.status}`);
         }
         
-        const responseText = await response.text();
-        let data;
-        
-        try {
-          // Try to parse as JSON
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('JSON parse error:', parseError, 'Response was:', responseText.substring(0, 150) + '...');
-          throw new Error('Invalid JSON response');
-        }
-        
-        setNewsItems(Array.isArray(data) ? data : []);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching latest news:', err);
-        setNewsItems(MOCK_NEWS);
-        setError('Could not fetch live news updates. Showing sample data instead.');
-      } finally {
-        setLoading(false);
+        const data = await res.json();
+        setNewsItems(data.slice(0, 10));
       }
-    };
+    } catch (err) {
+      console.error('Error fetching news:', err);
+      setError('Failed to fetch latest news. Showing fallback content.');
+      // Filter mock news by language
+      setNewsItems(MOCK_NEWS.filter(item => item.language === activeLanguage));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }
 
-    fetchLatestNews();
-  }, []);
+  useEffect(() => {
+    fetchNews();
+  }, [activeLanguage]);
 
-  if (loading) {
+  const handleLanguageChange = (language: string) => {
+    setActiveLanguage(language);
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchNews();
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  if (loading && !refreshing) {
     return (
       <Container maxW="container.xl" py={8}>
         <Flex direction="column" align="center" justify="center" py={10} gap={4}>
@@ -183,60 +166,86 @@ export default function LatestUpdatesPage() {
   });
 
   return (
-    <Container maxW="container.xl" py={8}>
-      <Box bg={headerBg} p={6} borderRadius="lg" mb={8}>
-        <Heading size="xl" textAlign="center">Latest Updates</Heading>
-        <Text textAlign="center" mt={2}>
-          The most recent news from India's top sources
+    <Box maxW="1200px" mx="auto" px={4} py={8}>
+      <Box bg={headerBg} p={6} mb={8} borderRadius="md">
+        <Heading as="h1" size="xl" mb={4} color={headingColor}>
+          Latest News Updates
+        </Heading>
+        <Text fontSize="lg" mb={4}>
+          Stay informed with the most recent news and developments.
         </Text>
+        <HStack spacing={4}>
+          <Button
+            size="sm"
+            leftIcon={<FaLanguage />}
+            colorScheme={activeLanguage === 'en' ? 'blue' : 'gray'}
+            onClick={() => handleLanguageChange('en')}
+            isDisabled={refreshing}
+          >
+            English
+          </Button>
+          <Button
+            size="sm"
+            leftIcon={<FaLanguage />}
+            colorScheme={activeLanguage === 'hi' ? 'blue' : 'gray'}
+            onClick={() => handleLanguageChange('hi')}
+            isDisabled={refreshing}
+          >
+            हिंदी
+          </Button>
+          <Button
+            size="sm"
+            leftIcon={<FaSyncAlt />}
+            onClick={handleRefresh}
+            isLoading={refreshing}
+            loadingText="Refreshing"
+          >
+            Refresh
+          </Button>
+        </HStack>
       </Box>
 
-      {sortedDates.map(date => (
-        <Box key={date} mb={8}>
-          <Flex align="center" mb={4}>
-            <Heading size="md" mr={4}>{date}</Heading>
-            <Divider flex="1" />
-          </Flex>
-          
-          <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-            {groupedNews[date].map((item, index) => (
-              <LinkBox
-                key={index}
-                borderWidth="1px"
-                borderRadius="lg"
-                overflow="hidden"
-                bg={bgColor}
-                borderColor={borderColor}
-                _hover={{ transform: 'translateY(-4px)', shadow: 'md' }}
-                transition="all 0.2s"
-              >
-                <Stack p={4} spacing={2}>
-                  <Badge 
-                    colorScheme={item.sourceColor || SOURCE_COLORS[item.source] || 'blue'} 
-                    alignSelf="start"
-                  >
-                    {item.source}
-                  </Badge>
-                  
-                  <Heading size="md" my={2}>
-                    <LinkOverlay href={item.link} target="_blank">
-                      {item.title}
-                    </LinkOverlay>
-                  </Heading>
-                  
-                  <Text noOfLines={3}>
-                    {item.description}
-                  </Text>
-                  
-                  <Text fontSize="sm" color="gray.500">
-                    {new Date(item.pubDate).toLocaleTimeString()}
-                  </Text>
-                </Stack>
-              </LinkBox>
-            ))}
-          </SimpleGrid>
+      {loading && !refreshing ? (
+        <Flex justify="center" align="center" my={12}>
+          <Spinner size="xl" color="blue.500" thickness="4px" />
+        </Flex>
+      ) : error ? (
+        <Box p={4} bg="red.50" color="red.500" borderRadius="md" mb={6}>
+          {error}
         </Box>
-      ))}
-    </Container>
+      ) : (
+        <VStack spacing={6} align="stretch">
+          {newsItems.map((item, index) => (
+            <Box
+              key={index}
+              p={6}
+              bg={bgColor}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={borderColor}
+              shadow="md"
+            >
+              <Heading as="h2" size="md" mb={2} color={headingColor}>
+                {item.title}
+              </Heading>
+              <Text fontSize="sm" color="gray.500" mb={3}>
+                {formatDate(item.pubDate)}
+              </Text>
+              <Text mb={4} color={textColor}>
+                {item.description}
+              </Text>
+              <Flex justify="space-between" align="center">
+                <Badge px={2} py={1} bg={badgeBg} color={item.sourceColor || "blue.500"} borderRadius="full">
+                  {item.source}
+                </Badge>
+                <Link href={item.link} isExternal color="blue.500" fontWeight="medium">
+                  Read full story
+                </Link>
+              </Flex>
+            </Box>
+          ))}
+        </VStack>
+      )}
+    </Box>
   );
 } 

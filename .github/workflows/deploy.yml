@@ -26,46 +26,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: "18"
-          cache: npm
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+          cache: "npm"
       - name: Install dependencies
         run: npm ci
-      - name: Set build environment
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        with:
+          static_site_generator: next
+      - name: Create data directory
+        run: mkdir -p public/data
+      - name: Fetch latest news for English
         run: |
-          echo "Setting production environment variables"
-          echo "NODE_ENV=production" >> $GITHUB_ENV
-          echo "STATIC_BUILD=true" >> $GITHUB_ENV
-          echo "APP_BASE_PATH=/bharatinfo-sol" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_STATIC_BUILD=true" >> $GITHUB_ENV
-      - name: Build
-        run: npm run build:github
-        env:
-          NODE_ENV: production
-          STATIC_BUILD: true
-          APP_BASE_PATH: /bharatinfo-sol
-          NEXT_PUBLIC_STATIC_BUILD: true
-      - name: Fix image paths
-        run: node scripts/fix-image-paths.js
-      - name: Debug build output
+          GNEWS_API_KEY="${{ secrets.GNEWS_API_KEY || 'fallback-key' }}"
+          curl -s "https://gnews.io/api/v4/search?q=india&country=in&max=10&apikey=$GNEWS_API_KEY" > public/data/news-en.json || echo "Failed to fetch English news"
+          if [ ! -s public/data/news-en.json ] || [ "$(cat public/data/news-en.json | grep -c 'articles')" -eq 0 ]; then
+            echo "English news API call failed or returned invalid data"
+          else
+            echo "Successfully fetched English news"
+          fi
+      - name: Fetch latest news for Hindi
         run: |
-          echo "Listing build output files..."
-          ls -la out/
-          echo "Checking for HTML files..."
-          find out -name "*.html" | head -5
-          echo "Checking for index.html content..."
-          grep -n "fetch" out/index.html || echo "No direct fetch references found in index.html"
-      - name: Manual copy of public assets
+          GNEWS_API_KEY="${{ secrets.GNEWS_API_KEY || 'fallback-key' }}"
+          curl -s "https://gnews.io/api/v4/search?q=भारत&country=in&lang=hi&max=10&apikey=$GNEWS_API_KEY" > public/data/news-hi.json || echo "Failed to fetch Hindi news"
+          if [ ! -s public/data/news-hi.json ] || [ "$(cat public/data/news-hi.json | grep -c 'articles')" -eq 0 ]; then
+            echo "Hindi news API call failed or returned invalid data"
+          else
+            echo "Successfully fetched Hindi news"
+          fi
+      - name: Create fallback news files
         run: |
-          echo "Manually copying public directory to out directory..."
-          cp -r public/* out/
+          # Check if English news file exists and has content
+          if [ ! -s public/data/news-en.json ] || [ "$(cat public/data/news-en.json | grep -c 'articles')" -eq 0 ]; then
+            echo "Creating fallback English news file"
+            cp scripts/mock-news-en.json public/data/news-en.json
+          fi
+          
+          # Check if Hindi news file exists and has content
+          if [ ! -s public/data/news-hi.json ] || [ "$(cat public/data/news-hi.json | grep -c 'articles')" -eq 0 ]; then
+            echo "Creating fallback Hindi news file"
+            cp scripts/mock-news-hi.json public/data/news-hi.json
+          fi
+      - name: Build with Next.js
+        run: NODE_ENV=production STATIC_BUILD=true APP_BASE_PATH="/bharatinfo-sol" npm run build:github
+      - name: Debug output directory
+        run: find out -type f | sort
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v2
         with:
           path: ./out
 
@@ -79,4 +90,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4 
+        uses: actions/deploy-pages@v2 
